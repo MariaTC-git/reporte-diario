@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte Diario</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+}
+/* BARRA SUPERIOR */
+.topbar {
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+/* SELECTOR DE FECHA (izquierda) */
+.date-selector {
+    position: relative;
+}
+.date-btn {
+    background: #334155;
+    border: 1px solid #475569;
+    color: #f1f5f9;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    min-width: 200px;
+}
+.date-btn:hover {
+    background: #475569;
+    border-color: #64748b;
+}
+.date-btn .arrow {
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+.date-btn .arrow.open {
+    transform: rotate(180deg);
+}
+.date-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    width: 280px;
+    max-height: 320px;
+    overflow-y: auto;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    display: none;
+    z-index: 200;
+}
+.date-dropdown.show { display: block; }
+.date-dropdown input {
+    width: calc(100% - 16px);
+    margin: 8px;
+    padding: 8px 12px;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: #0f172a;
+    color: #f1f5f9;
+    font-size: 14px;
+    outline: none;
+}
+.date-dropdown input:focus { border-color: #3b82f6; }
+.date-option {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+}
+.date-option:hover {
+    background: #334155;
+    border-left-color: #3b82f6;
+}
+.date-option.active {
+    background: #1e3a5f;
+    border-left-color: #3b82f6;
+    font-weight: 600;
+}
+.date-option .check {
+    color: #3b82f6;
+    font-size: 16px;
+}
+/* PESTAÑAS (derecha) */
+.tabs {
+    display: flex;
+    gap: 4px;
+    background: #0f172a;
+    padding: 4px;
+    border-radius: 10px;
+}
+.tab-btn {
+    padding: 8px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+    color: #94a3b8;
+}
+.tab-btn:hover { color: #e2e8f0; }
+.tab-btn.active {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+/* CONTENIDO */
+.content-area {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 24px;
+}
+.image-container {
+    width: 100%;
+    min-height: 400px;
+    background: #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #334155;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.image-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: #64748b;
+    padding: 60px 20px;
+}
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #334155;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.no-data {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+}
+.no-data h2 { font-size: 22px; margin-bottom: 8px; color: #94a3b8; }
+.error-msg {
+    text-align: center;
+    padding: 40px 20px;
+    color: #f87171;
+}
+.error-msg h2 { font-size: 20px; margin-bottom: 8px; }
+.date-header {
+    text-align: center;
+    margin-bottom: 16px;
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+/* SCROLL DROPDOWN */
+.date-dropdown::-webkit-scrollbar { width: 6px; }
+.date-dropdown::-webkit-scrollbar-track { background: #0f172a; border-radius: 3px; }
+.date-dropdown::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+/* RESPONSIVE */
+@media (max-width: 640px) {
+    .topbar { flex-direction: column; gap: 12px; padding: 12px 16px; }
+    .date-btn { min-width: unset; width: 100%; justify-content: center; }
+    .date-dropdown { width: calc(100vw - 32px); left: 0; }
+    .tabs { width: 100%; }
+    .tab-btn { flex: 1; text-align: center; padding: 8px 12px; font-size: 13px; }
+    .content-area { padding: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- BARRA SUPERIOR -->
+<div class="topbar">
+    <!-- Selector de fecha -->
+    <div class="date-selector" id="dateSelector">
+        <button class="date-btn" onclick="toggleDropdown()">
+            <span id="selectedDateText">Cargando...</span>
+            <span class="arrow" id="arrowIcon">&#9660;</span>
+        </button>
+        <div class="date-dropdown" id="dateDropdown">
+            <input type="text" id="dateSearch" placeholder="Buscar fecha (dd/mm/aaaa)..."
+                   oninput="filterDates()" onclick="event.stopPropagation()">
+            <div id="dateList"></div>
+        </div>
+    </div>
+
+    <!-- Pestañas -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="saldos" onclick="switchTab('saldos')">Saldos</button>
+        <button class="tab-btn" data-tab="movimientos" onclick="switchTab('movimientos')">Movimientos</button>
+    </div>
+</div>
+
+<!-- CONTENIDO -->
+<div class="content-area">
+    <div class="date-header" id="dateHeader">Selecciona una fecha</div>
+    <div class="image-container" id="imageContainer">
+        <div class="loading">
+            <div class="spinner"></div>
+            <span>Cargando datos...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURACION - CAMBIA AQUI LA URL DE TU EXCEL
+// ============================================================
+const EXCEL_URL = "https://apexamsas-my.sharepoint.com/:x:/g/personal/atorres_apexam_co/IQCFR3egi2o7TpQnFT1EjDD6AYjn8gj0CxCFroWERFoXKm8?e=bh24Kk&download=1";
+
+// Variables globales
+let registros = [];      // Array de { fecha, link_saldos, link_movimientos }
+let fechasDisponibles = [];
+let fechaActual = null;
+let tabActiva = "saldos";
+
+// ============================================================
+// CARGAR DATOS DESDE EL EXCEL
+// ============================================================
+async function cargarDatos() {
+    try {
+        const response = await fetch(EXCEL_URL);
+        if (!response.ok) throw new Error("Error al descargar el archivo");
+
+        const data = await response.arrayBuffer();
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+        registros = json.map(row => {
+            let fechaRaw = row.fecha || row.Fecha || "";
+            let fechaStr = fechaRaw.toString().trim();
+
+            // Si viene como numero de serie de Excel (fecha serial)
+            if (typeof fechaRaw === "number" && fechaRaw > 40000) {
+                const excelEpoch = new Date(1899, 11, 30);
+                const d = new Date(excelEpoch.getTime() + fechaRaw * 86400000);
+                const dd = String(d.getDate()).padStart(2, "0");
+                const mm = String(d.getMonth() + 1).padStart(2, "0");
+                const yyyy = d.getFullYear();
+                fechaStr = `${dd}/${mm}/${yyyy}`;
+            }
+
+            return {
+                fecha: fechaStr,
+                link_saldos: row.link_saldos || row.link_saldos || "",
+                link_movimientos: row.link_movimientos || row.link_movimientos || ""
+            };
+        }).filter(r => r.fecha && (r.link_saldos || r.link_movimientos));
+
+        // Extraer fechas unicas y ordenar (mas reciente primero)
+        const fechasSet = new Set(registros.map(r => r.fecha));
+        fechasDisponibles = Array.from(fechasSet).sort((a, b) => {
+            const [d1, m1, y1] = a.split("/").map(Number);
+            const [d2, m2, y2] = b.split("/").map(Number);
+            const dateA = new Date(y1, m1 - 1, d1);
+            const dateB = new Date(y2, m2 - 1, d2);
+            return dateB - dateA;
+        });
+
+        if (fechasDisponibles.length === 0) {
+            mostrarError("No se encontraron fechas en el archivo");
+            return;
+        }
+
+        // Seleccionar la ultima fecha por defecto
+        fechaActual = fechasDisponibles[0];
+        actualizarSelector();
+        mostrarContenido();
+
+    } catch (error) {
+        console.error("Error:", error);
+        mostrarError("No se pudo cargar el archivo. Verifica que la URL sea correcta y el archivo sea accesible.");
+    }
+}
+
+// ============================================================
+// SELECTOR DE FECHA
+// ============================================================
+function toggleDropdown() {
+    const dd = document.getElementById("dateDropdown");
+    const arrow = document.getElementById("arrowIcon");
+    dd.classList.toggle("show");
+    arrow.classList.toggle("open");
+    if (dd.classList.contains("show")) {
+        document.getElementById("dateSearch").value = "";
+        renderDateList(fechasDisponibles);
+        setTimeout(() => document.getElementById("dateSearch").focus(), 100);
+    }
+}
+
+function filterDates() {
+    const q = document.getElementById("dateSearch").value.toLowerCase();
+    const filtered = fechasDisponibles.filter(f => f.includes(q));
+    renderDateList(filtered);
+}
+
+function renderDateList(fechas) {
+    const list = document.getElementById("dateList");
+    list.innerHTML = fechas.map(f => `
+        <div class="date-option ${f === fechaActual ? "active" : ""}"
+             onclick="seleccionarFecha('${f}')">
+            <span>${f}</span>
+            ${f === fechaActual ? '<span class="check">&#10003;</span>' : ""}
+        </div>
+    `).join("");
+}
+
+function seleccionarFecha(fecha) {
+    fechaActual = fecha;
+    document.getElementById("dateDropdown").classList.remove("show");
+    document.getElementById("arrowIcon").classList.remove("open");
+    actualizarSelector();
+    mostrarContenido();
+}
+
+function actualizarSelector() {
+    document.getElementById("selectedDateText").textContent = fechaActual || "Seleccionar fecha";
+}
+
+// ============================================================
+// PESTAÑAS
+// ============================================================
+function switchTab(tab) {
+    tabActiva = tab;
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+    mostrarContenido();
+}
+
+// ============================================================
+// MOSTRAR CONTENIDO
+// ============================================================
+function mostrarContenido() {
+    if (!fechaActual) return;
+
+    const container = document.getElementById("imageContainer");
+    const header = document.getElementById("dateHeader");
+
+    const registro = registros.find(r => r.fecha === fechaActual);
+    if (!registro) {
+        container.innerHTML = `<div class="no-data"><h2>Sin datos</h2><p>No hay informacion para esta fecha</p></div>`;
+        header.textContent = fechaActual;
+        return;
+    }
+
+    const link = tabActiva === "saldos" ? registro.link_saldos : registro.link_movimientos;
+    const tabName = tabActiva === "saldos" ? "SALDOS" : "MOVIMIENTOS";
+    header.textContent = `${fechaActual} — ${tabName}`;
+
+    if (!link) {
+        container.innerHTML = `<div class="no-data"><h2>Sin imagen</h2><p>No hay link de ${tabName.toLowerCase()} para esta fecha</p></div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="loading" id="loadingIndicator">
+            <div class="spinner"></div>
+            <span>Cargando imagen...</span>
+        </div>
+        <img id="reportImage" src="${link}" alt="Reporte ${tabName} ${fechaActual}"
+             onload="this.style.display='block'; document.getElementById('loadingIndicator').style.display='none';"
+             onerror="document.getElementById('loadingIndicator').innerHTML='<div class=\\'error-msg\\'><h2>Error al cargar imagen</h2><p>El link podria haber expirado o ser invalido</p></div>';"
+             style="display:none;">
+    `;
+}
+
+function mostrarError(mensaje) {
+    const container = document.getElementById("imageContainer");
+    container.innerHTML = `<div class="error-msg"><h2>Error</h2><p>${mensaje}</p></div>`;
+}
+
+// ============================================================
+// CERRAR DROPDOWN AL HACER CLICK FUERA
+// ============================================================
+document.addEventListener("click", function(e) {
+    const selector = document.getElementById("dateSelector");
+    if (!selector.contains(e.target)) {
+        document.getElementById("dateDropdown").classList.remove("show");
+        document.getElementById("arrowIcon").classList.remove("open");
+    }
+});
+
+// ============================================================
+// INICIAR
+// ============================================================
+cargarDatos();
+</script>
+</body>
+</html>
