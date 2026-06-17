@@ -1,0 +1,27 @@
+[
+  {
+    "fecha": "17/06/2026",
+    "link_saldos": "https://hcti.io/v1/image/019ed5e0-797e-7468-8c2e-db7a2db11214",
+    "link_movimientos": "https://hcti.io/v1/image/019ed5e0-67b7-7be7-91b8-f7fddf575a49"
+  },
+  {
+    "fecha": "16/06/2026",
+    "link_saldos": "https://hcti.io/v1/image/019ed0b8-ba9c-74c0-8e77-a4d0570ace47",
+    "link_movimientos": "https://hcti.io/v1/image/019ed0b8-a52f-7527-b5be-6cc97a38c069"
+  },
+  {
+    "fecha": "12/06/2026",
+    "link_saldos": "https://hcti.io/v1/image/019ebc1f-a5e5-78b3-99a5-44e81ea2a11b",
+    "link_movimientos": "https://hcti.io/v1/image/019ebc1f-955f-71d0-a3a5-d65649edf35b"
+  },
+  {
+    "fecha": "11/06/2026",
+    "link_saldos": "https://hcti.io/v1/image/019eb701-9249-772f-ad8c-158e06c60bc7",
+    "link_movimientos": "https://hcti.io/v1/image/019eb6f4-218e-70b8-a794-4d7608b3fed9"
+  },
+  {
+    "fecha": "10/06/2026",
+    "link_saldos": "https://hcti.io/v1/image/019eb34a-bddc-76a7-996a-e590c5ab9b7b",
+    "link_movimientos": "https://hcti.io/v1/image/019eb323-d67d-76b8-843e-1f29385a5369"
+  }
+]
