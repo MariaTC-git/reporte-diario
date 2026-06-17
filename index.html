@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reporte Diario</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -27,9 +26,7 @@ body {
     box-shadow: 0 2px 12px rgba(0,0,0,0.3);
 }
 /* SELECTOR DE FECHA (izquierda) */
-.date-selector {
-    position: relative;
-}
+.date-selector { position: relative; }
 .date-btn {
     background: #334155;
     border: 1px solid #475569;
@@ -53,9 +50,7 @@ body {
     font-size: 12px;
     transition: transform 0.2s;
 }
-.date-btn .arrow.open {
-    transform: rotate(180deg);
-}
+.date-btn .arrow.open { transform: rotate(180deg); }
 .date-dropdown {
     position: absolute;
     top: calc(100% + 6px);
@@ -102,10 +97,7 @@ body {
     border-left-color: #3b82f6;
     font-weight: 600;
 }
-.date-option .check {
-    color: #3b82f6;
-    font-size: 16px;
-}
+.date-option .check { color: #3b82f6; font-size: 16px; }
 /* PESTAÑAS (derecha) */
 .tabs {
     display: flex;
@@ -191,11 +183,9 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-/* SCROLL DROPDOWN */
 .date-dropdown::-webkit-scrollbar { width: 6px; }
 .date-dropdown::-webkit-scrollbar-track { background: #0f172a; border-radius: 3px; }
 .date-dropdown::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
-/* RESPONSIVE */
 @media (max-width: 640px) {
     .topbar { flex-direction: column; gap: 12px; padding: 12px 16px; }
     .date-btn { min-width: unset; width: 100%; justify-content: center; }
@@ -208,9 +198,7 @@ body {
 </head>
 <body>
 
-<!-- BARRA SUPERIOR -->
 <div class="topbar">
-    <!-- Selector de fecha -->
     <div class="date-selector" id="dateSelector">
         <button class="date-btn" onclick="toggleDropdown()">
             <span id="selectedDateText">Cargando...</span>
@@ -223,14 +211,12 @@ body {
         </div>
     </div>
 
-    <!-- Pestañas -->
     <div class="tabs">
         <button class="tab-btn active" data-tab="saldos" onclick="switchTab('saldos')">Saldos</button>
         <button class="tab-btn" data-tab="movimientos" onclick="switchTab('movimientos')">Movimientos</button>
     </div>
 </div>
 
-<!-- CONTENIDO -->
 <div class="content-area">
     <div class="date-header" id="dateHeader">Selecciona una fecha</div>
     <div class="image-container" id="imageContainer">
@@ -243,54 +229,35 @@ body {
 
 <script>
 // ============================================================
-// CONFIGURACION - CAMBIA AQUI LA URL DE TU EXCEL
+// CONFIGURACION - CAMBIA AQUI LA URL DE TU JSON EN GITHUB
 // ============================================================
-// ⚠️ CAMBIA ESTA URL por el link de descarga de tu archivo .xlsx en OneDrive
-//    Ejemplo de OneDrive: https://publicacionesof-my.sharepoint.com/:x:/g/personal/...?download=1
-const EXCEL_URL = "https://apexamsas-my.sharepoint.com/:x:/g/personal/atorres_apexam_co/IQCFR3egi2o7TpQnFT1EjDD6AYjn8gj0CxCFroWERFoXKm8?e=bh24Kk&download=1";
+// ⚠️ CAMBIA ESTA URL por la URL raw de tu archivo datos.json en GitHub
+//    Ejemplo: https://raw.githubusercontent.com/TU-USUARIO/TU-REPO/main/datos.json
+const JSON_URL = "https://raw.githubusercontent.com/TU-USUARIO/TU-REPO/main/datos.json";
 
-// Variables globales
-let registros = [];      // Array de { fecha, link_saldos, link_movimientos }
+let registros = [];
 let fechasDisponibles = [];
 let fechaActual = null;
 let tabActiva = "saldos";
 
-// ============================================================
-// CARGAR DATOS DESDE EL EXCEL
-// ============================================================
 async function cargarDatos() {
     try {
-        const response = await fetch(EXCEL_URL);
-        if (!response.ok) throw new Error("Error al descargar el archivo");
-
-        const data = await response.arrayBuffer();
-        const workbook = XLSX.read(data, { type: "array" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-
-        registros = json.map(row => {
-            let fechaRaw = row.fecha || row.Fecha || "";
-            let fechaStr = fechaRaw.toString().trim();
-
-            // Si viene como numero de serie de Excel (fecha serial)
-            if (typeof fechaRaw === "number" && fechaRaw > 40000) {
-                const excelEpoch = new Date(1899, 11, 30);
-                const d = new Date(excelEpoch.getTime() + fechaRaw * 86400000);
-                const dd = String(d.getDate()).padStart(2, "0");
-                const mm = String(d.getMonth() + 1).padStart(2, "0");
-                const yyyy = d.getFullYear();
-                fechaStr = `${dd}/${mm}/${yyyy}`;
-            }
-
-            return {
-                fecha: fechaStr,
-                link_saldos: row.link_saldos || row.link_saldos || "",
-                link_movimientos: row.link_movimientos || row.link_movimientos || ""
-            };
-        }).filter(r => r.fecha && (r.link_saldos || r.link_movimientos));
-
-        // Extraer fechas unicas y ordenar (mas reciente primero)
+        const response = await fetch(JSON_URL);
+        if (!response.ok) throw new Error("Error al descargar el archivo (HTTP " + response.status + ")");
+        
+        const json = await response.json();
+        
+        if (!Array.isArray(json) || json.length === 0) {
+            mostrarError("El archivo JSON esta vacio o no tiene el formato correcto");
+            return;
+        }
+        
+        registros = json.map(r => ({
+            fecha: r.fecha || "",
+            link_saldos: r.link_saldos || r.link_saldos || "",
+            link_movimientos: r.link_movimientos || r.link_movimientos || ""
+        })).filter(r => r.fecha && (r.link_saldos || r.link_movimientos));
+        
         const fechasSet = new Set(registros.map(r => r.fecha));
         fechasDisponibles = Array.from(fechasSet).sort((a, b) => {
             const [d1, m1, y1] = a.split("/").map(Number);
@@ -299,26 +266,22 @@ async function cargarDatos() {
             const dateB = new Date(y2, m2 - 1, d2);
             return dateB - dateA;
         });
-
+        
         if (fechasDisponibles.length === 0) {
             mostrarError("No se encontraron fechas en el archivo");
             return;
         }
-
-        // Seleccionar la ultima fecha por defecto
+        
         fechaActual = fechasDisponibles[0];
         actualizarSelector();
         mostrarContenido();
-
+        
     } catch (error) {
         console.error("Error:", error);
-        mostrarError("No se pudo cargar el archivo. Verifica que la URL sea correcta y el archivo sea accesible.");
+        mostrarError("No se pudo cargar el archivo. Verifica que la URL del JSON sea correcta y el archivo exista en GitHub.");
     }
 }
 
-// ============================================================
-// SELECTOR DE FECHA
-// ============================================================
 function toggleDropdown() {
     const dd = document.getElementById("dateDropdown");
     const arrow = document.getElementById("arrowIcon");
@@ -360,9 +323,6 @@ function actualizarSelector() {
     document.getElementById("selectedDateText").textContent = fechaActual || "Seleccionar fecha";
 }
 
-// ============================================================
-// PESTAÑAS
-// ============================================================
 function switchTab(tab) {
     tabActiva = tab;
     document.querySelectorAll(".tab-btn").forEach(btn => {
@@ -371,31 +331,28 @@ function switchTab(tab) {
     mostrarContenido();
 }
 
-// ============================================================
-// MOSTRAR CONTENIDO
-// ============================================================
 function mostrarContenido() {
     if (!fechaActual) return;
-
+    
     const container = document.getElementById("imageContainer");
     const header = document.getElementById("dateHeader");
-
+    
     const registro = registros.find(r => r.fecha === fechaActual);
     if (!registro) {
-        container.innerHTML = `<div class="no-data"><h2>Sin datos</h2><p>No hay informacion para esta fecha</p></div>`;
+        container.innerHTML = '<div class="no-data"><h2>Sin datos</h2><p>No hay informacion para esta fecha</p></div>';
         header.textContent = fechaActual;
         return;
     }
-
+    
     const link = tabActiva === "saldos" ? registro.link_saldos : registro.link_movimientos;
     const tabName = tabActiva === "saldos" ? "SALDOS" : "MOVIMIENTOS";
     header.textContent = `${fechaActual} — ${tabName}`;
-
+    
     if (!link) {
         container.innerHTML = `<div class="no-data"><h2>Sin imagen</h2><p>No hay link de ${tabName.toLowerCase()} para esta fecha</p></div>`;
         return;
     }
-
+    
     container.innerHTML = `
         <div class="loading" id="loadingIndicator">
             <div class="spinner"></div>
@@ -413,9 +370,6 @@ function mostrarError(mensaje) {
     container.innerHTML = `<div class="error-msg"><h2>Error</h2><p>${mensaje}</p></div>`;
 }
 
-// ============================================================
-// CERRAR DROPDOWN AL HACER CLICK FUERA
-// ============================================================
 document.addEventListener("click", function(e) {
     const selector = document.getElementById("dateSelector");
     if (!selector.contains(e.target)) {
@@ -424,9 +378,6 @@ document.addEventListener("click", function(e) {
     }
 });
 
-// ============================================================
-// INICIAR
-// ============================================================
 cargarDatos();
 </script>
 </body>
