@@ -1,10 +1,5 @@
 [
   {
-    "fecha": "23/06/2026",
-    "link_saldos": "https://hcti.io/v1/image/019ef440-53c0-7750-a918-a51c712b588a",
-    "link_movimientos": "https://hcti.io/v1/image/019ef43e-b6a4-7235-a72e-ed9944782016" 
-  },
-  {
     "fecha": "22/06/2026",
     "link_saldos": "https://hcti.io/v1/image/019eefb9-9dc5-7656-87bd-ce9952e020c3",
     "link_movimientos": "https://hcti.io/v1/image/019eefb9-9763-788e-9694-0937f406780a"
