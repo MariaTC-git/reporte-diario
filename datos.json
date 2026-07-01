@@ -1,5 +1,10 @@
 [
   {
+    "fecha": "01/07/2026",
+    "link_saldos": "https://hcti.io/v1/image/019f1d74-dcc7-73c5-8073-5eac0b92fbc9",
+    "link_movimientos": ""
+  },
+  {
     "fecha": "30/06/2026",
     "link_saldos": "https://hcti.io/v1/image/019f1853-298e-7a78-98d3-c113ee483f65",
     "link_movimientos": "https://hcti.io/v1/image/019f18d0-b1c7-734e-8d69-5d4fb156426e"
